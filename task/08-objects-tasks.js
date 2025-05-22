@@ -23,9 +23,12 @@
  *    console.log(r.getArea());   // => 200
  */
 function Rectangle(width, height) {
-    throw new Error('Not implemented');
+    this.width = width;
+    this.height = height;
+    this.getArea = function() {
+        return this.width * this.height;
+    };
 }
-
 
 /**
  * Returns the JSON representation of specified object
@@ -38,9 +41,8 @@ function Rectangle(width, height) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 function getJSON(obj) {
-    throw new Error('Not implemented');
+    return JSON.stringify(obj);
 }
-
 
 /**
  * Returns the object of specified type from JSON representation
@@ -54,7 +56,9 @@ function getJSON(obj) {
  *
  */
 function fromJSON(proto, json) {
-    throw new Error('Not implemented');
+    const obj = JSON.parse(json);
+    Object.setPrototypeOf(obj, proto);
+    return obj;
 }
 
 
@@ -106,36 +110,127 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
+class CssSelector {
+    constructor() {
+        this.result = '';
+        this.order = 0;
+        this.used = {
+            element: false,
+            id: false,
+            pseudoElement: false,
+        };
+    }
+
+    clone() {
+        const copy = new CssSelector();
+        copy.result = this.result;
+        copy.order = this.order;
+        copy.used = { ...this.used };
+        return copy;
+    }
+
+    checkOrder(current) {
+        if (current < this.order) {
+            throw new Error(
+                'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+            );
+        }
+        this.order = current;
+    }
+
+    checkUnique(type) {
+        if (this.used[type]) {
+            throw new Error(
+                'Element, id and pseudo-element should not occur more then one time inside the selector'
+            );
+        }
+        this.used[type] = true;
+    }
+
+    element(value) {
+        this.checkOrder(1);
+        this.checkUnique('element');
+        const copy = this.clone();
+        copy.result += value;
+        return copy;
+    }
+
+    id(value) {
+        this.checkOrder(2);
+        this.checkUnique('id');
+        const copy = this.clone();
+        copy.result += `#${value}`;
+        return copy;
+    }
+
+    class(value) {
+        this.checkOrder(3);
+        const copy = this.clone();
+        copy.result += `.${value}`;
+        return copy;
+    }
+
+    attr(value) {
+        this.checkOrder(4);
+        const copy = this.clone();
+        copy.result += `[${value}]`;
+        return copy;
+    }
+
+    pseudoClass(value) {
+        this.checkOrder(5);
+        const copy = this.clone();
+        copy.result += `:${value}`;
+        return copy;
+    }
+
+    pseudoElement(value) {
+        this.checkOrder(6);
+        this.checkUnique('pseudoElement');
+        const copy = this.clone();
+        copy.result += `::${value}`;
+        return copy;
+    }
+
+    stringify() {
+        return this.result;
+    }
+}
+
 const cssSelectorBuilder = {
-
-    element: function(value) {
-        throw new Error('Not implemented');
+    element(value) {
+        return new CssSelector().element(value);
     },
 
-    id: function(value) {
-        throw new Error('Not implemented');
+    id(value) {
+        return new CssSelector().id(value);
     },
 
-    class: function(value) {
-        throw new Error('Not implemented');
+    class(value) {
+        return new CssSelector().class(value);
     },
 
-    attr: function(value) {
-        throw new Error('Not implemented');
+    attr(value) {
+        return new CssSelector().attr(value);
     },
 
-    pseudoClass: function(value) {
-        throw new Error('Not implemented');
+    pseudoClass(value) {
+        return new CssSelector().pseudoClass(value);
     },
 
-    pseudoElement: function(value) {
-        throw new Error('Not implemented');
+    pseudoElement(value) {
+        return new CssSelector().pseudoElement(value);
     },
 
-    combine: function(selector1, combinator, selector2) {
-        throw new Error('Not implemented');
+    combine(selector1, combinator, selector2) {
+        return {
+            stringify() {
+                return `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+            },
+        };
     },
 };
+
 
 
 module.exports = {
